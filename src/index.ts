@@ -1,9 +1,10 @@
 import { Contract, providers, Wallet, BigNumber, utils } from 'ethers';
 
 const USDC_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+const USDT_ADDRESS = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
 
 // token0がusdc
-const LP_ADDRESS = '0x2cF7252e74036d1Da831d11089D326296e64a728';
+const ROUTER_ADDRESS = '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff';
 const RPC_URL = 'https://polygon-rpc.com';
 
 const USDC_DECIMALS = 6;
@@ -19,29 +20,34 @@ const usdc = new Contract(USDC_ADDRESS, [
   'function approve(address spender, uint256 amount) external returns (bool)',
 ]).connect(signer);
 
-const swapBalance = BigNumber.from(1).mul(
-  BigNumber.from(10).pow(USDC_DECIMALS)
+const swapIn = BigNumber.from(10).mul(
+  BigNumber.from(10).pow(USDC_DECIMALS - 1)
 );
 
-const lp = new Contract(LP_ADDRESS, [
-  'function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)',
+const swapOut = BigNumber.from(0).mul(
+  BigNumber.from(10).pow(USDT_DECIMALS - 1)
+);
+
+const router = new Contract(ROUTER_ADDRESS, [
+  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
 ]).connect(signer);
 
 const main = async () => {
-  const receipt1 = await usdc.functions.approve(LP_ADDRESS, swapBalance, {
+  const receipt1 = await usdc.functions.approve(ROUTER_ADDRESS, swapIn, {
     gasPrice: (await provider.getGasPrice()).add(10),
   });
   console.log(receipt1);
   await receipt1.wait();
 
-  const receipt2 = await lp.functions.swap(
-    0,
-    BigNumber.from(8).mul(BigNumber.from(10).pow(USDT_DECIMALS - 1)),
+  const receipt2 = await router.functions.swapExactTokensForTokens(
+    swapIn,
+    swapOut,
+    [USDC_ADDRESS, USDT_ADDRESS],
     signer.address,
-    utils.formatBytes32String('')
-    // {
-    //   gasPrice: await provider.getGasPrice(),
-    // }
+    Date.now() + 60 * 2,
+    {
+      gasPrice: (await provider.getGasPrice()).add(10),
+    }
   );
   console.log(receipt2);
   await receipt2.wait();
