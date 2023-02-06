@@ -1,0 +1,15 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: Node Js Steps
+    image: node:16.14.2
+    commands:
+      - npm ci
+      - npm test
+
+trigger:
+  event:
+    - push
+    - pull_request

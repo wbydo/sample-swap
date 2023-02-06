@@ -1,0 +1,10 @@
+pull_request_rules:
+  - name: Automatic merge on approval
+    conditions:
+      - author~=^dependabot(|-preview)\[bot\]$
+      - -conflict
+      - check-success=test
+      - 'title~=^(build\(deps-dev\): )?Bump [^\s]+ from ([\d]+)\.[^\s]+ to \2\.[^\s]+'
+    actions:
+      merge:
+        method: merge
